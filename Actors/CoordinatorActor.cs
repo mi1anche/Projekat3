@@ -10,7 +10,6 @@ public class CoordinatorActor : ReceiveActor
 {
     private readonly ILoggingAdapter _log = Context.GetLogger();
 
-    // Ime autora (lowercase) -> referenca na njegov AuthorActor
     private readonly Dictionary<string, IActorRef> _authorActors = new();
     private readonly AppSettings _settings;
 
@@ -62,15 +61,12 @@ public class CoordinatorActor : ReceiveActor
 
     private static string SanitizeActorName(string raw)
     {
-        // Akka dozvoljava samo ASCII slova/cifre i ograničen set specijalnih karaktera.
-        // Zamenjujemo sve ostalo (razmake, ćirilicu, interpunkciju...) sa '-'.
         var chars = raw.Select(c =>
             char.IsLetterOrDigit(c) && c <= 127 ? c : '-'
         ).ToArray();
 
         var result = new string(chars);
 
-        // sklanjamo eventualne duplirane crtice radi lepšeg imena (opciono, kozmetika)
         while (result.Contains("--"))
             result = result.Replace("--", "-");
 

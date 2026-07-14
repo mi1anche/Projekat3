@@ -16,7 +16,6 @@ public class Server
 
     public async Task StartAsync()
     {
-        // HOCON konfiguracija - dodajemo poseban dispatcher za StatsWorkerActor-e
         var hocon = @"
         akka {
             log-dead-letters = 0
@@ -55,7 +54,6 @@ public class Server
             }
             catch (HttpListenerException) when (!_isRunning)
             {
-                // ocekivano gasenje
             }
         }
     }
@@ -118,8 +116,7 @@ public class Server
         {
             var requestMsg = new FetchBooksByAuthor(authorName);
 
-            // Cekamo (asinhrono, max 60s) odgovor od AuthorActor-a preko koordinatora
-            var result = await _coordinator!.Ask<AuthorBooksResult>(requestMsg, TimeSpan.FromSeconds(60));
+            var result = await _coordinator!.Ask<AuthorBooksResult>(requestMsg, TimeSpan.FromSeconds(30));
 
             Log("SUCCESS", "REQUEST", $"Zahtev za autora '{authorName}' uspesno obradjen. " +
                                        $"Broj knjiga: {result.Books.Count}, " +

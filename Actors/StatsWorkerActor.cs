@@ -3,12 +3,7 @@ using TreciProjekat.Models;
 
 namespace TreciProjekat.Actors;
 
-/// <summary>
-/// Aktor koji vrsi "kompleksniju obradu podataka" - agregatnu statistiku po autoru
-/// (prosecan rejting, opseg godina izdavanja, distribucija jezika prevoda).
-/// Namerno zivi na posebnom dispatcheru (vidi CoordinatorActor), tako da se
-/// racunanje statistike izvrsava na drugoj niti nezavisno od AuthorActor-a i Rx tokova.
-/// </summary>
+
 public class StatsWorkerActor : ReceiveActor
 {
     public StatsWorkerActor()
