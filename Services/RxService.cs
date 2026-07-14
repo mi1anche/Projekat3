@@ -48,16 +48,13 @@ public class RxService
                     return Observable.Return((IList<BookInfo>)books);
                 }
 
-                // Offseti za preostale stranice (1, 2, 3...) - vec unapred znamo tacne offsete
-                // jer OpenLibrary koristi offset/limit paginaciju (za razliku od "next" kursora)
                 var remainingOffsets = Enumerable.Range(1, pagesToFetch - 1)
                     .Select(page => page * pageSize);
 
                 Console.WriteLine($"[Rx PARALELNO] Autor '{author}': povlacim jos {remainingOffsets.Count()} " +
                                    $"stranica ISTOVREMENO (offseti: {string.Join(", ", remainingOffsets)}).");
 
-                // SelectMany nad sinhronom sekvencom offseta pokrece SVE HTTP pozive odmah,
-                // konkurentno (merge semantika) - ovo je prava paralelizacija, ne sekvencijalno cekanje.
+                
                 return remainingOffsets
                     .ToObservable()
                     .SelectMany(offset => Observable.FromAsync(() => FetchPageAsync(author, offset, pageSize)))
@@ -81,11 +78,9 @@ public class RxService
         if (docs == null) yield break;
 
         foreach (var doc in docs)
-        {
-            // Osnovno filtriranje - odbacujemo dokumente bez naslova
+        {        
             if (string.IsNullOrWhiteSpace(doc.Title)) continue;
 
-            // Osnovno mapiranje u interni model
             yield return new BookInfo(
                 Key: doc.Key ?? Guid.NewGuid().ToString(),
                 Title: doc.Title!,

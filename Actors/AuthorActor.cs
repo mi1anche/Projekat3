@@ -5,10 +5,6 @@ using TreciProjekat.Services;
 
 namespace TreciProjekat.Actors;
 
-/// <summary>
-/// Po jedan AuthorActor po autoru. Cuva evidenciju knjiga (naslov, godina, jezici prevoda,
-/// prosecan rejting) kao interno stanje i azurira ga na osnovu Rx tokova.
-/// </summary>
 public class AuthorActor : ReceiveActor
 {
     private readonly ILoggingAdapter _log = Context.GetLogger();
@@ -18,11 +14,9 @@ public class AuthorActor : ReceiveActor
     private readonly RxService _rxService;
     private readonly IActorRef _statsWorker;
 
-    // Interno stanje: kljuc dela (OpenLibrary key) -> podaci o knjizi
     private readonly Dictionary<string, BookInfo> _books = new();
     private BookStats? _lastStats;
 
-    // Zahtevi koji cekaju da se prvi podaci prikupe
     private readonly List<IActorRef> _pendingRequesters = new();
 
     public AuthorActor(string authorName, IActorRef statsWorker, RxService rxService)
@@ -46,20 +40,14 @@ public class AuthorActor : ReceiveActor
             }
         });
 
-        // Periodicno azuriranje koje stize od Rx toka
         Receive<BooksUpdated>(msg =>
         {
             _log.Info($"[Rx] Azuriranje za '{_authorName}': primljeno {msg.Books.Count} knjiga.");
 
             foreach (var book in msg.Books)
             {
-                // Azuriramo naziv, godinu izdavanja, jezike prevoda i prosecan rejting
-                // (ako knjiga vec postoji u evidenciji - prepisuje se najnovijim podacima;
-                // ako ne postoji - dodaje se kao nova)
                 _books[book.Key] = book;
             }
-
-            // Prosledjujemo trenutno stanje worker aktoru na kompleksniju obradu (statistiku)
             _statsWorker.Tell(new ComputeStats(_authorName, _books.Values.ToList()));
         });
 
