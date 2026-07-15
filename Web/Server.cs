@@ -18,6 +18,10 @@ public class Server
     {
         var hocon = @"
         akka {
+            loglevel = INFO
+            stdout-loglevel = INFO
+            loggers = [""Akka.Event.DefaultLogger""]
+
             log-dead-letters = 0
             log-dead-letters-during-shutdown = off
 
@@ -116,7 +120,7 @@ public class Server
         {
             var requestMsg = new FetchBooksByAuthor(authorName);
 
-            var result = await _coordinator!.Ask<AuthorBooksResult>(requestMsg, TimeSpan.FromSeconds(30));
+            var result = await _coordinator!.Ask<AuthorBooksResult>(requestMsg, TimeSpan.FromSeconds(60));
 
             Log("SUCCESS", "REQUEST", $"Zahtev za autora '{authorName}' uspesno obradjen. " +
                                        $"Broj knjiga: {result.Books.Count}, " +
