@@ -1,8 +1,8 @@
-﻿using System.Net.Http;
+﻿using TreciProjekat.Models;
+using System.Net.Http;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Text.Json;
-using TreciProjekat.Models;
 
 namespace TreciProjekat.Services;
 
@@ -36,7 +36,17 @@ public class RxService
         return Observable.FromAsync(() => FetchPageAsync(author, offset: 0, limit: pageSize))
             .SelectMany(firstPage =>
             {
-                var books = MapDocs(firstPage.Docs).ToList();
+                var books = (firstPage.Docs ?? new List<OpenLibraryDoc>())
+                    .Where(doc => !string.IsNullOrWhiteSpace(doc.Title))
+                    .Select(doc => new BookInfo(
+                        Key: doc.Key ?? Guid.NewGuid().ToString(),
+                        Title: doc.Title!,
+                        FirstPublishYear: doc.FirstPublishYear,
+                        Languages: doc.Language ?? new List<string>(),
+                        RatingsAverage: doc.RatingsAverage,
+                        RatingsCount: doc.RatingsCount
+                    ))
+                    .ToList();
 
                 var totalPagesAvailable = pageSize > 0
                     ? (int)Math.Ceiling((double)firstPage.NumFound / pageSize)
@@ -54,11 +64,19 @@ public class RxService
                 Console.WriteLine($"[Rx PARALELNO] Autor '{author}': povlacim jos {remainingOffsets.Count()} " +
                                    $"stranica ISTOVREMENO (offseti: {string.Join(", ", remainingOffsets)}).");
 
-                
                 return remainingOffsets
                     .ToObservable()
                     .SelectMany(offset => Observable.FromAsync(() => FetchPageAsync(author, offset, pageSize)))
-                    .SelectMany(response => MapDocs(response.Docs))
+                    .SelectMany(response => (response.Docs ?? new List<OpenLibraryDoc>())
+                        .Where(doc => !string.IsNullOrWhiteSpace(doc.Title))
+                        .Select(doc => new BookInfo(
+                            Key: doc.Key ?? Guid.NewGuid().ToString(),
+                            Title: doc.Title!,
+                            FirstPublishYear: doc.FirstPublishYear,
+                            Languages: doc.Language ?? new List<string>(),
+                            RatingsAverage: doc.RatingsAverage,
+                            RatingsCount: doc.RatingsCount
+                        )))
                     .ToList()
                     .Select(restBooks =>
                     {
@@ -71,25 +89,6 @@ public class RxService
                 Console.WriteLine($"[RxService UPOZORENJE] Greska pri dohvatanju za autora '{author}': {ex.Message}");
                 return Observable.Return((IList<BookInfo>)new List<BookInfo>());
             });
-    }
-
-    private static IEnumerable<BookInfo> MapDocs(List<OpenLibraryDoc>? docs)
-    {
-        if (docs == null) yield break;
-
-        foreach (var doc in docs)
-        {        
-            if (string.IsNullOrWhiteSpace(doc.Title)) continue;
-
-            yield return new BookInfo(
-                Key: doc.Key ?? Guid.NewGuid().ToString(),
-                Title: doc.Title!,
-                FirstPublishYear: doc.FirstPublishYear,
-                Languages: doc.Language ?? new List<string>(),
-                RatingsAverage: doc.RatingsAverage,
-                RatingsCount: doc.RatingsCount
-            );
-        }
     }
 
     private async Task<SearchResponse> FetchPageAsync(string author, int offset, int limit)

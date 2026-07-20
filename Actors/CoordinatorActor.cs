@@ -1,6 +1,5 @@
 ﻿using Akka.Actor;
 using Akka.Event;
-using TreciProjekat.Actors;
 using TreciProjekat.Models;
 using TreciProjekat.Services;
 
@@ -33,8 +32,8 @@ public class CoordinatorActor : ReceiveActor
                 var statsWorker = Context.ActorOf(workerProps, $"stats-worker-{safeName}");
 
                 var rxService = new RxService(SharedHttpClient, _settings);
-                var authorProps = Props.Create(() => new AuthorActor(request.AuthorName, statsWorker, rxService));
 
+                var authorProps = Props.Create(() => new AuthorActor(request.AuthorName, statsWorker, rxService));
                 authorActor = Context.ActorOf(authorProps, $"author-{safeName}");
                 _authorActors[authorKey] = authorActor;
             }

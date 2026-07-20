@@ -49,5 +49,5 @@ public record StatsFailed(string AuthorName, Exception Exception);
 public record AppSettings(
     int PageSize = 20,
     int MaxPages = 3,
-    int RxIntervalSeconds = 120
+    int RxIntervalSeconds = 30
 );
