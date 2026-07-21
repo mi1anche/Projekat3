@@ -12,7 +12,7 @@ public class CoordinatorActor : ReceiveActor
     private readonly Dictionary<string, IActorRef> _authorActors = new();
     private readonly AppSettings _settings;
 
-    private static readonly HttpClient SharedHttpClient = new HttpClient();
+    private static readonly HttpClient _httpClient = new HttpClient();
 
     public CoordinatorActor(AppSettings settings)
     {
@@ -31,7 +31,7 @@ public class CoordinatorActor : ReceiveActor
                     .WithDispatcher("akka.stats-dispatcher");
                 var statsWorker = Context.ActorOf(workerProps, $"stats-worker-{safeName}");
 
-                var rxService = new RxService(SharedHttpClient, _settings);
+                var rxService = new RxService(_httpClient, _settings);
 
                 var authorProps = Props.Create(() => new AuthorActor(request.AuthorName, statsWorker, rxService));
                 authorActor = Context.ActorOf(authorProps, $"author-{safeName}");
